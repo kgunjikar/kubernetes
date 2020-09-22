@@ -56,6 +56,8 @@ type Interface interface {
 	Services() ServiceInformer
 	// ServiceAccounts returns a ServiceAccountInformer.
 	ServiceAccounts() ServiceAccountInformer
+	// SubNamespaces returns a SubNamespaceInformer.
+	SubNamespaces() SubNamespaceInformer
 }
 
 type version struct {
@@ -147,4 +149,9 @@ func (v *version) Services() ServiceInformer {
 // ServiceAccounts returns a ServiceAccountInformer.
 func (v *version) ServiceAccounts() ServiceAccountInformer {
 	return &serviceAccountInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// SubNamespaces returns a SubNamespaceInformer.
+func (v *version) SubNamespaces() SubNamespaceInformer {
+	return &subnamespaceInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

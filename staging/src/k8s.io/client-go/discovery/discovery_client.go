@@ -390,6 +390,13 @@ func (d *DiscoveryClient) ServerPreferredResources() ([]*metav1.APIResourceList,
 	return rs, err
 }
 
+// ServerPreferredSubNamespacedResources returns the supported subnamespaced resources with the
+// version preferred by the server.
+// SubNamespace will be the same as namespaced
+func (d *DiscoveryClient) ServerPreferredSubNamespacedResources() ([]*metav1.APIResourceList, error) {
+	return ServerPreferredNamespacedResources(d)
+}
+
 // ServerPreferredNamespacedResources returns the supported namespaced resources with the
 // version preferred by the server.
 func (d *DiscoveryClient) ServerPreferredNamespacedResources() ([]*metav1.APIResourceList, error) {

@@ -392,6 +392,7 @@ func NewControllerInitializers(loopMode ControllerLoopMode) map[string]InitFunc 
 	controllers["podgc"] = startPodGCController
 	controllers["resourcequota"] = startResourceQuotaController
 	controllers["namespace"] = startNamespaceController
+	controllers["subnamespace"] = startNamespaceController
 	controllers["serviceaccount"] = startServiceAccountController
 	controllers["garbagecollector"] = startGarbageCollectorController
 	controllers["daemonset"] = startDaemonSetController

@@ -479,6 +479,38 @@ func startResourceQuotaController(ctx ControllerContext) (http.Handler, bool, er
 
 	return nil, true, nil
 }
+func startSubNamespaceController(ctx ControllerContext) (http.Handler, bool, error) {
+	// the subnamespace cleanup controller is very chatty.  It makes lots of discovery calls and then it makes lots of delete calls
+	// the ratelimiter negatively affects its speed.  Deleting 100 total items in a namespace (that's only a few of each resource
+	// including events), takes ~10 seconds by default.
+	subnsKubeconfig := ctx.ClientBuilder.ConfigOrDie("subnamespace-controller")
+	subnsKubeconfig.QPS *= 20
+	subnsKubeconfig.Burst *= 100
+	subnamespaceKubeClient := clientset.NewForConfigOrDie(subnsKubeconfig)
+	return startModifiedSubNamespaceController(ctx, subnamespaceKubeClient, subnsKubeconfig)
+}
+
+func startModifiedSubNamespaceController(ctx ControllerContext, subnamespaceKubeClient clientset.Interface, subnsKubeconfig *restclient.Config) (http.Handler, bool, error) {
+
+	metadataClient, err := metadata.NewForConfig(subnsKubeconfig)
+	if err != nil {
+		return nil, true, err
+	}
+
+	discoverResourcesFn := subnamespaceKubeClient.Discovery().ServerPreferredSubNamespacedResources
+
+	subnamespaceController := subnamespacecontroller.NewSubNamespaceController(
+		subnamespaceKubeClient,
+		metadataClient,
+		discoverResourcesFn,
+		ctx.InformerFactory.Core().V1().SubNamespaces(),
+		ctx.ComponentConfig.SubNamespaceController.SubNamespaceSyncPeriod.Duration,
+		v1.FinalizerKubernetes,
+	)
+	go subnamespaceController.Run(int(ctx.ComponentConfig.SubNamespaceController.ConcurrentNamespaceSyncs), ctx.Stop)
+
+	return nil, true, nil
+}
 
 func startNamespaceController(ctx ControllerContext) (http.Handler, bool, error) {
 	// the namespace cleanup controller is very chatty.  It makes lots of discovery calls and then it makes lots of delete calls
